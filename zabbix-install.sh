@@ -21,11 +21,12 @@ install_on_debian_like() {
     apt update -y
 
     echo "📥 Instalando dependências do Zabbix..."
-    apt install -y wget gnupg2 lsb-release software-properties-common
 
-    configure_zabbix_repo_debian
-    install_database_debian
-    install_zabbix_server_debian
+    apt install -y wget gnupg2 build-essential snmpd snmp snmptrapd libsnmp-base libsnmp-dev htop vim apache2 apache2-utils lsb-release apt-transport-https ca-certificates software-properties-common ; wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg ; sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' ; apt update ; apt install -y php ; apt install -y libapache2-mod-php php-mysql php-cli php-pear php-gmp php-gd php-bcmath php-curl php-xml php-zip python3-pip
+
+    #configure_zabbix_repo_debian
+    #install_database_debian
+    #install_zabbix_server_debian
 }
 
 install_on_rhel_like() {
@@ -50,7 +51,7 @@ configure_zabbix_repo_debian() {
 
 install_database_debian() {
     echo "🗄️ Instalando MariaDB (Debian)..."
-    apt install -y mariadb-server
+    apt install -y mariadb-server mariadb-client
     systemctl enable mariadb
     systemctl start mariadb
 }
@@ -84,8 +85,7 @@ detect_os
 
 case "$OS_NAME" in
     ubuntu|debian)
-        #install_on_debian_like
-        echo "Chegou aqui"
+        install_on_debian_like
         ;;
     centos|rhel|rocky)
         install_on_rhel_like
