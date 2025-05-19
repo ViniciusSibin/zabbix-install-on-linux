@@ -17,6 +17,14 @@ detect_os() {
 }
 
 install_on_debian_like() {
+    echo "Solicitando permissão de superusuário..."
+    if [ "$EUID" -ne 0 ]; then
+        echo "🔑 Você não é root. Executando como sudo..."
+        sudo "$0" "$@"
+        exit
+    fi
+    echo "🔑 Você é root. Continuando..."
+
     echo "📦 Atualizando pacotes (apt)..."
     apt update -y
 
