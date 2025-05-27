@@ -1,15 +1,22 @@
 #!/bin/bash
 
 set -e  # Sai ao primeiro erro
+
+# Variáveis de configuração
+ZABBIX_CONF="/etc/zabbix/zabbix_server.conf"
+DB_NAME="zabbix"
+DB_USER="zabbix"
+DB_PASSWORD="As!b!nt&ch"
+
 ascii_banner() {
     echo
     echo "+------------------------------------------------+"
-    figlet "$1"
+    figlet -f small "$1"
     echo "+------------------------------------------------+"
     echo
 }
 
-ascii_banner  "Detectando sistema operacional"
+ascii_banner  "Sistema operacional"
 
 detect_os() {
     if [ -f /etc/os-release ]; then
@@ -35,16 +42,15 @@ install_on_debian_like() {
     ascii_banner "Atualizando pacotes"
     apt update -y ; apt upgrade -y
 
-    ascii_banner "Instalando dependências do Zabbix"
+    ascii_banner "Dependências Zabbix"
 
     apt install -y wget gnupg2 build-essential snmpd snmp snmptrapd libsnmp-base libsnmp-dev htop vim apache2 apache2-utils lsb-release apt-transport-https ca-certificates software-properties-common figlet; wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg ; sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' ; apt update ; apt install -y php ; apt install -y libapache2-mod-php php-mysql php-cli php-pear php-gmp php-gd php-bcmath php-curl php-xml php-zip python3-pip
 
     
 
     install_database_debian
-    echo "🔧 Configurando repositório Zabbix (Debian)..."
-    #configure_zabbix_repo_debian
-    #install_zabbix_server_debian
+    configure_zabbix_repo_debian
+    install_zabbix_server_debian
     #configure_zabbix_server
     #install_grafana
     #install_plugin_zabbix_on_grafana
@@ -71,9 +77,7 @@ install_database_debian() {
     systemctl enable mariadb
     systemctl start mariadb
 
-    ascii_banner "Realizando configuração segura do MariaDB"
-
-    ZABBIX_DATABASE_PASSWORD="As!b!nt&ch"
+    echo "Realizando configuração segura do MariaDB"
 
     mysql -u root <<EOF
         -- Remove usuários anônimos
@@ -86,9 +90,9 @@ install_database_debian() {
         -- Aplica as alterações
         FLUSH PRIVILEGES;
         -- Cria o banco de dados do Zabbix
-        CREATE DATABASE IF NOT EXISTS zabbix character set utf8mb4 collate utf8mb4_bin;
-        CREATE USER IF NOT EXISTS'zabbix'@'%' IDENTIFIED BY '${ZABBIX_DATABASE_PASSWORD}';
-        GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'%';
+        CREATE DATABASE IF NOT EXISTS ${DB_NAME} character set utf8mb4 collate utf8mb4_bin;
+        CREATE USER IF NOT EXISTS'${DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
+        GRANT ALL PRIVILEGES ON ${DB_USER}.* TO '${DB_USER}'@'%';
         SET GLOBAL log_bin_trust_function_creators = 1;
         FLUSH PRIVILEGES;
 EOF
@@ -97,21 +101,50 @@ EOF
 }
 
 configure_zabbix_repo_debian() {
-    echo "🔧 Configurando repositório Zabbix (Debian)..."
-    wget https://repo.zabbix.com/zabbix/6.4/debian/pool/main/z/zabbix-release/zabbix-release_6.4-1+debian$(lsb_release -rs)_all.deb
+    ascii_banner "Repositorio Zabbix"
+    
+    cd /tmp
+
+    wget https://repo.zabbix.com/zabbix/7.0/debian/pool/main/z/zabbix-release/zabbix-release_latest_7.0+debian12_all.deb
+    
     dpkg -i zabbix-release_*.deb
+
     apt update -y
 }
 
 install_zabbix_server_debian() {
-    echo "🖥️ Instalando Zabbix Server (Debian)..."
+    ascii_banner "Instalando Zabbix"
     apt install -y zabbix-server-mysql zabbix-frontend-php zabbix-apache-conf zabbix-sql-scripts zabbix-agent
 }
 
 configure_zabbix_server() {
     echo "🔧 Configurando Zabbix Server..."
-    # Aqui você pode adicionar comandos para configurar o Zabbix Server, como editar o arquivo de configuração
-    # Exemplo: sed -i 's/# DBPassword=/DBPassword=your_password/' /etc/zabbix/zabbix_server.conf
+    # Define a database name (descomenta e altera ou adiciona se não existir)
+    if grep -q "^# DBName=" "$ZABBIX_CONF"; then
+        sed -i "s/^# DBName=.*/DBName=$DB_NAME/" "$ZABBIX_CONF"
+    elif grep -q "^DBName=" "$ZABBIX_CONF"; then
+        sed -i "s/^DBName=.*/DBName=$DB_NAME/" "$ZABBIX_CONF"
+    else
+        echo "DBName=$DB_NAME" >> "$ZABBIX_CONF"
+    fi
+
+    # Define o usuário do banco
+    if grep -q "^# DBUser=" "$ZABBIX_CONF"; then
+        sed -i "s/^# DBUser=.*/DBUser=$DB_USER/" "$ZABBIX_CONF"
+    elif grep -q "^DBUser=" "$ZABBIX_CONF"; then
+        sed -i "s/^DBUser=.*/DBUser=$DB_USER/" "$ZABBIX_CONF"
+    else
+        echo "DBUser=$DB_USER" >> "$ZABBIX_CONF"
+    fi
+
+    # Define a senha do banco
+    if grep -q "^# DBPassword=" "$ZABBIX_CONF"; then
+        sed -i "s/^# DBPassword=.*/DBPassword=$DB_PASSWORD/" "$ZABBIX_CONF"
+    elif grep -q "^DBPassword=" "$ZABBIX_CONF"; then
+        sed -i "s/^DBPassword=.*/DBPassword=$DB_PASSWORD/" "$ZABBIX_CONF"
+    else
+        echo "DBPassword=$DB_PASSWORD" >> "$ZABBIX_CONF"
+    fi
 }
 
 install_grafana() {
