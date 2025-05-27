@@ -1,8 +1,15 @@
 #!/bin/bash
 
 set -e  # Sai ao primeiro erro
+ascii_banner() {
+    echo
+    echo "+------------------------------------------------+"
+    figlet "$1"
+    echo "+------------------------------------------------+"
+    echo
+}
 
-echo "🔍 Detectando sistema operacional...\n"
+ascii_banner  "Detectando sistema operacional"
 
 detect_os() {
     if [ -f /etc/os-release ]; then
@@ -13,29 +20,29 @@ detect_os() {
         echo "❌ Não foi possível detectar o sistema operacional."
         exit 1
     fi
-    echo "\n🖥️  Detected: $OS_NAME $OS_VERSION\n\n"
+    echo "\r🖥️  Detected: $OS_NAME $OS_VERSION\r\r"
 }
 
 install_on_debian_like() {
-    echo "Solicitando permissão de superusuário..."
+    echo "\r\rSolicitando permissão de superusuário..."
     if [ "$EUID" -ne 0 ]; then
-        echo "\n🔑 Você não é root. Executando como sudo...\n"
+        echo "\r🔑 Você não é root. Executando como sudo...\r"
         sudo "$0" "$@"
         exit
     fi
-    echo "\n🔑 Você é root. Continuando...\n"
+    echo "\r🔑 Você é root. Continuando...\r"
 
-    echo "\n📦 Atualizando pacotes (apt)...\n"
-    apt update -y
+    ascii_banner "Atualizando pacotes"
+    apt update upgrade -y
 
-    echo "\n📥 Instalando dependências do Zabbix...\n"
+    ascii_banner "Instalando dependências do Zabbix"
 
-    apt install -y wget gnupg2 build-essential snmpd snmp snmptrapd libsnmp-base libsnmp-dev htop vim apache2 apache2-utils lsb-release apt-transport-https ca-certificates software-properties-common ; wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg ; sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' ; apt update ; apt install -y php ; apt install -y libapache2-mod-php php-mysql php-cli php-pear php-gmp php-gd php-bcmath php-curl php-xml php-zip python3-pip
+    apt install -y wget gnupg2 build-essential snmpd snmp snmptrapd libsnmp-base libsnmp-dev htop vim apache2 apache2-utils lsb-release apt-transport-https ca-certificates software-properties-common figlet; wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg ; sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' ; apt update ; apt install -y php ; apt install -y libapache2-mod-php php-mysql php-cli php-pear php-gmp php-gd php-bcmath php-curl php-xml php-zip python3-pip
 
     
 
     install_database_debian
-    ECHO "\n🔧 Configurando repositório Zabbix (Debian)...\n"
+    echo "\r🔧 Configurando repositório Zabbix (Debian)...\r"
     #configure_zabbix_repo_debian
     #install_zabbix_server_debian
     #configure_zabbix_server
@@ -59,14 +66,12 @@ install_on_rhel_like() {
 # Funções específicas para Debian/Ubuntu
 
 install_database_debian() {
-    echo "🗄️ Instalando MariaDB (Debian)..."
+    ascii_banner "Instalando MariaDB"
     apt install -y mariadb-server mariadb-client
     systemctl enable mariadb
     systemctl start mariadb
 
-    echo "\n🔧 Configurando MariaDB...\n"
-
-    echo "🔐 Realizando configuração segura do MariaDB..."
+    ascii_banner "Realizando configuração segura do MariaDB"
 
     ZABBIX_DATABASE_PASSWORD="As!b!nt&ch"
 
