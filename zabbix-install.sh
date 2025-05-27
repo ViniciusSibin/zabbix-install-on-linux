@@ -20,17 +20,17 @@ detect_os() {
         echo "❌ Não foi possível detectar o sistema operacional."
         exit 1
     fi
-    echo "\r🖥️  Detected: $OS_NAME $OS_VERSION\r\r"
+    echo "🖥️  Detected: $OS_NAME $OS_VERSION"
 }
 
 install_on_debian_like() {
-    echo "\r\rSolicitando permissão de superusuário..."
+    echo "Solicitando permissão de superusuário..."
     if [ "$EUID" -ne 0 ]; then
-        echo "\r🔑 Você não é root. Executando como sudo...\r"
+        echo "🔑 Você não é root. Executando como sudo..."
         sudo "$0" "$@"
         exit
     fi
-    echo "\r🔑 Você é root. Continuando...\r"
+    echo "🔑 Você é root. Continuando..."
 
     ascii_banner "Atualizando pacotes"
     apt update upgrade -y
@@ -42,7 +42,7 @@ install_on_debian_like() {
     
 
     install_database_debian
-    echo "\r🔧 Configurando repositório Zabbix (Debian)...\r"
+    echo "🔧 Configurando repositório Zabbix (Debian)..."
     #configure_zabbix_repo_debian
     #install_zabbix_server_debian
     #configure_zabbix_server
