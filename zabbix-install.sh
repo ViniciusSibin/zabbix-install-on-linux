@@ -7,7 +7,16 @@ ZABBIX_CONF="/etc/zabbix/zabbix_server.conf"
 DB_NAME="zabbix"
 DB_USER="zabbix"
 DB_PASSWORD="As!b!nt&ch"
+TIMEZONE="America/Sao_Paulo"
 
+#setando o fuso horário
+if [ -z "$TIMEZONE" ]; then
+    echo "❌ Fuso horário não definido. Por favor, defina a variável TIMEZONE."
+    exit 1
+fi
+timedatectl set-timezone "$TIMEZONE"
+
+# Função para exibir banners ASCII
 ascii_banner() {
     echo
     echo "+------------------------------------------------+"
