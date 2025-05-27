@@ -33,7 +33,7 @@ install_on_debian_like() {
     echo "🔑 Você é root. Continuando..."
 
     ascii_banner "Atualizando pacotes"
-    apt update upgrade -y
+    apt update -y ; apt upgrade -y
 
     ascii_banner "Instalando dependências do Zabbix"
 
