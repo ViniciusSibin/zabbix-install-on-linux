@@ -82,17 +82,13 @@ install_database_debian() {
         FLUSH PRIVILEGES;
         -- Cria o banco de dados do Zabbix
         CREATE DATABASE IF NOT EXISTS zabbix character set utf8mb4 collate utf8mb4_bin;
-        CREATE USER 'zabbix'@'%' IDENTIFIED BY '${ZABBIX_DATABASE_PASSWORD}';
+        CREATE USER IF NOT EXISTS'zabbix'@'%' IDENTIFIED BY '${ZABBIX_DATABASE_PASSWORD}';
         GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'%';
         SET GLOBAL log_bin_trust_function_creators = 1;
         FLUSH PRIVILEGES;
-        QUIT;
 EOF
 
     echo "✅ Configuração segura do MariaDB concluída."
-
-
-
 }
 
 configure_zabbix_repo_debian() {
