@@ -51,7 +51,7 @@ install_on_debian_like() {
     install_database_debian
     configure_zabbix_repo_debian
     install_zabbix_server_debian
-    #configure_zabbix_server
+    configure_zabbix_server
     #install_grafana
     #install_plugin_zabbix_on_grafana
 }
@@ -115,10 +115,16 @@ configure_zabbix_repo_debian() {
 install_zabbix_server_debian() {
     ascii_banner "Instalando Zabbix"
     apt install -y zabbix-server-mysql zabbix-frontend-php zabbix-apache-conf zabbix-sql-scripts zabbix-agent
+
+    zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | mysql --default-character-set=utf8mb4 -uroot zabbix
+
+    mysql -u root <<EOF
+        SET GLOBAL log_bin_trust_function_creators = 0;
+EOF
 }
 
 configure_zabbix_server() {
-    echo "🔧 Configurando Zabbix Server..."
+    ascii_banner "Configurando Zabbix Server..."
     # Define a database name (descomenta e altera ou adiciona se não existir)
     if grep -q "^# DBName=" "$ZABBIX_CONF"; then
         sed -i "s/^# DBName=.*/DBName=$DB_NAME/" "$ZABBIX_CONF"
