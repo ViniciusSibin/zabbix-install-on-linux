@@ -185,6 +185,8 @@ configure_mibs(){
     # Baixa os MIBs do site oficial
     #wget -r -np -nH --cut-dirs=1 -R "index.html*" https://seudominio.com/mibs/ -P /usr/share/snmp/mibs/
 
+    chmod +x /usr/share/snmp/mibs/*
+
 
     echo "[OK] MIBs configurados com sucesso."
 }
