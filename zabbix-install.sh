@@ -61,6 +61,7 @@ install_on_debian_like() {
     configure_zabbix_repo_debian
     install_zabbix_server_debian
     configure_zabbix_server
+    apache_configuration
     #install_grafana
     #install_plugin_zabbix_on_grafana
 }
@@ -133,7 +134,7 @@ EOF
 }
 
 configure_zabbix_server() {
-    ascii_banner "Configurando Zabbix Server..."
+    ascii_banner "Configurando Zabbix"
     # Define a database name (descomenta e altera ou adiciona se não existir)
     if grep -q "^# DBName=" "$ZABBIX_CONF"; then
         sed -i "s/^# DBName=.*/DBName=$DB_NAME/" "$ZABBIX_CONF"
@@ -161,6 +162,56 @@ configure_zabbix_server() {
         echo "DBPassword=$DB_PASSWORD" >> "$ZABBIX_CONF"
     fi
 }
+
+apache_configuration() {
+    ascii_banner "Configurando Apache"
+
+    # 1. Atualiza /etc/zabbix/apache.conf
+    PHP_CONF_FILE="/etc/zabbix/apache.conf"
+    PHP_MODULE="mod_php$(php -v | grep -oP '^PHP \K[0-9]+' | head -n1).c"
+
+    cat > "$PHP_CONF_FILE" <<EOF
+        <IfModule $PHP_MODULE>
+            php_value max_execution_time 300
+            php_value memory_limit 512M
+            php_value post_max_size 48M
+            php_value upload_max_filesize 24M
+            php_value max_input_time 300
+            php_value max_input_vars 10000
+            php_value always_populate_raw_post_data -1
+            php_value date.timezone $TIMEZONE
+        </IfModule>
+EOF
+    echo "[OK] apache.conf atualizado com sucesso."
+
+    # 2. Atualiza /etc/apache2/sites-enabled/000-default.conf
+    DEFAULT_CONF="/etc/apache2/sites-enabled/000-default.conf"
+    if ! grep -q "<Directory /var/www/html/>" "$DEFAULT_CONF"; then
+        sed -i "/DocumentRoot \/var\/www\/html/a\\
+            <Directory /var/www/html/>\\
+                Options FollowSymLinks\\
+                AllowOverride All\\
+            </Directory>" "$DEFAULT_CONF"
+        echo "[OK] Diretiva <Directory> adicionada ao 000-default.conf."
+    else
+        echo "[INFO] Diretiva <Directory> já presente em 000-default.conf."
+    fi
+
+    # 3. Ativa o módulo rewrite
+    a2enmod rewrite >/dev/null && echo "[OK] Módulo rewrite ativado."
+
+    # 4. Ajusta segurança no security.conf
+    SEC_CONF="/etc/apache2/conf-available/security.conf"
+    sed -i 's/^ServerTokens .*/ServerTokens Prod/' "$SEC_CONF"
+    sed -i 's/^ServerSignature .*/ServerSignature Off/' "$SEC_CONF"
+    echo "[OK] Configurações de segurança aplicadas."
+
+    # 5. Reinicia o Apache
+    systemctl restart apache2 && echo "[OK] Apache reiniciado com sucesso."
+
+    echo "[FINALIZADO] Configuração do Apache concluída."
+}
+
 
 install_grafana() {
     echo "📥 Instalando Grafana..."
