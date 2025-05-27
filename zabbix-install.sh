@@ -161,6 +161,32 @@ configure_zabbix_server() {
     else
         echo "DBPassword=$DB_PASSWORD" >> "$ZABBIX_CONF"
     fi
+    
+    
+
+
+}
+
+configure_mibs(){
+    ascii_banner "Configurando MIBs"
+
+    # Verifica se o diretório /usr/share/snmp/mibs existe
+    if [ ! -d "/usr/share/snmp/mibs" ]; then
+        echo "❌ Diretório /usr/share/snmp/mibs não encontrado. Criando..."
+        mkdir -p /usr/share/snmp/mibs
+    fi
+
+    # Copia os arquivos MIBs para o diretório
+    cp /etc/snmp/mibs/* /usr/share/snmp/mibs/
+
+    # Configura o snmp.conf para usar os MIBs
+    echo "mibs +ALL" > /etc/snmp/snmp.conf
+
+    # Baixa os MIBs do site oficial
+    #wget -r -np -nH --cut-dirs=1 -R "index.html*" https://seudominio.com/mibs/ -P /usr/share/snmp/mibs/
+
+
+    echo "[OK] MIBs configurados com sucesso."
 }
 
 apache_configuration() {
