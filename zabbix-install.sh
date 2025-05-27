@@ -61,9 +61,13 @@ install_on_debian_like() {
     configure_zabbix_repo_debian
     install_zabbix_server_debian
     configure_zabbix_server
+    configure_mibs
     apache_configuration
     #install_grafana
     #install_plugin_zabbix_on_grafana
+
+    systemctl enable mariadb.service zabbix-server zabbix-agent apache2
+    systemctl restart mariadb.service zabbix-server zabbix-agent apache2 snmpd
 }
 
 install_on_rhel_like() {
@@ -161,10 +165,6 @@ configure_zabbix_server() {
     else
         echo "DBPassword=$DB_PASSWORD" >> "$ZABBIX_CONF"
     fi
-    
-    
-
-
 }
 
 configure_mibs(){
@@ -289,3 +289,5 @@ case "$OS_NAME" in
 esac
 
 echo "✅ Instalação base concluída. Configure o banco e inicie os serviços manualmente ou adicione ao script."
+
+ascii_banner "Instalação concluída"
